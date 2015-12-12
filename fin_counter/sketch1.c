@@ -44,23 +44,29 @@ class Button
 class Sensor
 {
 	public:
+		Sensor():
+			_M_pin(pin),
+			_M_thresh(thresh)
+			_M_period(period)
+		{}
 		void	update()
 		{
-			analog = analogRead(piezo);
+			float mean;
+			float analog = analogRead(_M_pin);
 
-			analog_sum += analog;
-			analog_count++;
+			_M_sum += analog;
+			_M_count++;
 
-			if(analog_count == analog_period) {
-				avg = (float)analog_sum / (float)analog_count;
+			if(_M_count == _M_period) {
+				mean = (float)_M_sum / (float)_M_count;
 
-				analog_sum = 0;
-				analog_count = 0;
+				_M_sum = 0;
+				_M_count = 0;
 
-				serial.Print(avg);
+				serial.Print(mean);
 
-				if(avg > thresh) {
-					toggle();
+				if(mean > _M_thresh) {
+					_M_handler(*this);
 				}
 			}
 		}
@@ -69,14 +75,23 @@ class Sensor
 		int	_M_sum;
 		int	_M_count;
 		int	_M_pin;
+		int	_M_thresh;
+		int	_M_period;
 };
 
-void toggle() {
+void	toggle_led()
+{
 	led_state = !led_state;
 	digitalWrite(led_pin, led_state);
 }
 
-Button button_reset(0);
+void handler(Sensor & s)
+{
+	toggle_led();
+}
+
+Button button_reset(0, 10);
+Sensor sensor(0, 500, 100);
 
 void loop()
 {
